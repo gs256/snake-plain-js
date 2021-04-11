@@ -1,0 +1,31 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#field {
+    background-color: antiquewhite;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.pixel {
+    background-color: #eee;
+    border: 1px solid white;
+}
+
+.pixel.green {
+    background-color: aquamarine;
+}
+
+.pixel.red {
+    background-color: crimson;
+}

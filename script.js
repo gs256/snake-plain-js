@@ -5,17 +5,26 @@ function random(min, max) {
 class Game {
     constructor() {
         this.tickRate = 150
-
-        this.snake = new Snake()
         this.field = new Field(new Size(20, 20))
         this._initEventListeners()
         this.tickCount = 0
-        this.food = new Point()
     }
 
     start() {
+        this.snake = new Snake()
+        this.food = new Point()
         this._spawnFood()
-        setInterval(_ => this._tick(), this.tickRate);
+        this.tickInterval = setInterval(_ => this._tick(), this.tickRate);
+    }
+
+    end() {
+        if (this.tickInterval)
+            clearInterval(this.tickInterval)
+    }
+
+    restart() {
+        this.end()
+        this.start()
     }
 
     setTickRate(ms) {
@@ -24,10 +33,9 @@ class Game {
 
     _tick() {
         this.tickCount++
-        if (this.tickCount % 10 == 0)
-            this.snake.increaseLength()
         this.field.clear()
         this.snake.move()
+        this._detectCollision()
         this._render()
     }
 
@@ -56,6 +64,32 @@ class Game {
             random(0, this.field.size.x - 1), 
             random(0, this.field.size.y - 1)
         )
+    }
+
+    _detectCollision() {
+        const head = this.snake.getHeadPosition()
+        
+        if (head.equals(this.food))
+            this._onFoodCollision()
+
+        if (head.x < 0 ||
+            head.x >= this.field.size.x ||
+            head.y < 0 ||
+            head.y >= this.field.size.y)
+            this._onBorderCollision()
+    }
+
+    _onFoodCollision() {
+        this.snake.increaseLength()
+        this._spawnFood()
+    }
+
+    _onTailCollision() {
+        this.restart()
+    }
+
+    _onBorderCollision() {
+        this.restart()
     }
 }
 
@@ -86,6 +120,10 @@ class Snake {
     increaseLength() {
         const lastPosition = this.positions[this.positions.length - 1]
         this.positions.push(Point.copy(lastPosition))
+    }
+
+    length() {
+        return this.positions.length
     }
 }
 
@@ -152,8 +190,6 @@ class Field {
 
         this._setFieldSize()
         this._populateField()
-        this.setSnakePixel(new Point(2, 10))
-        this.setFoodPixel(new Point(4, 10))
     }
 
     clear() {

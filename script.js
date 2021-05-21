@@ -35,7 +35,8 @@ class Game {
         this.tickCount++
         this.field.clear()
         this.snake.move()
-        this._detectCollision()
+        this._handleCollisions()
+        this.field.setScore(this.snake.length() - 1)
         this._render()
     }
 
@@ -60,23 +61,57 @@ class Game {
     }
 
     _spawnFood() {
-        this.food = new Point(
+        let point = this._getRandomPoint()
+
+        while (this._isCollidedWithSnake(point))
+            point = this._getRandomPoint()
+
+        this.food = point
+    }
+
+    _getRandomPoint() {
+        return new Point(
             random(0, this.field.size.x - 1), 
             random(0, this.field.size.y - 1)
         )
     }
 
-    _detectCollision() {
+    _isCollidedWithSnake(point) {
+        for (let position of this.snake.positions)
+            if (position.equals(point))
+                return true
+
+        return false
+    }
+
+    _handleCollisions() {
+        this._detectTailCollision()
+        this._detectFoodCollision()
+        this._detectBorderCollision()
+    }
+
+    _detectFoodCollision() {
         const head = this.snake.getHeadPosition()
-        
         if (head.equals(this.food))
             this._onFoodCollision()
+    }
 
+    _detectBorderCollision() {
+        const head = this.snake.getHeadPosition()
         if (head.x < 0 ||
             head.x >= this.field.size.x ||
             head.y < 0 ||
             head.y >= this.field.size.y)
             this._onBorderCollision()
+    }
+
+    _detectTailCollision() {
+        const head = this.snake.getHeadPosition()
+        for (let i = 1; i < this.snake.length(); i++)
+            if (this.snake.positions[i].equals(head)) {
+                this._onTailCollision()
+                return
+            }
     }
 
     _onFoodCollision() {
@@ -159,22 +194,35 @@ class SnakeMover {
 class SnakeRotator {
     constructor(snake) {
         this.snake = snake
+        this.upVector = new Vector2(0, -1)
+        this.downVector = new Vector2(0, 1)
+        this.leftVector = new Vector2(-1, 0)
+        this.rightVector = new Vector2(1, 0)
     }
 
     up() {
-        this.snake.movingVector = new Vector2(0, -1)
+        if (!this._isOpposite(this.upVector))
+            this.snake.movingVector = this.upVector
     }
 
     down() {
-        this.snake.movingVector = new Vector2(0, 1)
+        if (!this._isOpposite(this.downVector))
+            this.snake.movingVector = this.downVector
     }
 
     left() { 
-        this.snake.movingVector = new Vector2(-1, 0)
+        if (!this._isOpposite(this.leftVector))
+            this.snake.movingVector = this.leftVector
     }
 
     right() {
-        this.snake.movingVector = new Vector2(1, 0)
+        if (!this._isOpposite(this.rightVector))
+            this.snake.movingVector = this.rightVector
+    }
+
+    _isOpposite(vector) {
+        return (this.snake.movingVector.x === -vector.x &&
+                this.snake.movingVector.y === -vector.y)
     }
 }
 
@@ -183,6 +231,7 @@ class Field {
         this.pixelSize = 30
         this.size = size
         this.fieldNode = document.getElementById('field')
+        this.scoreNode = document.getElementById('score-value')
         this.matrix = []
 
         if (!this.fieldNode)
@@ -199,6 +248,10 @@ class Field {
                 pixel.className = defaultClass
             })
         })
+    }
+
+    setScore(score) {
+        this.scoreNode.innerText = score
     }
 
     setSnakePixel(point) {

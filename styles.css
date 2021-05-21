@@ -29,3 +29,13 @@ body {
 .pixel.red {
     background-color: crimson;
 }
+
+.score-board {
+    height: 50px;
+    position: absolute;
+    top: 0;
+}
+
+.score-text {
+    font-size: 20px;
+}
